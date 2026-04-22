@@ -1,0 +1,45 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+
+df = pd.read_csv("https://raw.githubusercontent.com/Stv21/sma_prac/refs/heads/main/Tweets.csv")
+
+sentiment_counts = df["airline_sentiment"].value_counts()
+
+print("\nOverall Sentiment Distribution:")
+print(sentiment_counts)
+
+
+plt.figure()
+sentiment_counts.plot(kind='bar')
+plt.title("Sentiment Distribution")
+plt.xlabel("Sentiment")
+plt.ylabel("Number of Tweets")
+plt.show()
+
+
+positive_tweets = df[df["airline_sentiment"] == "positive"]
+
+print("\nTotal Positive Tweets:", len(positive_tweets))
+print("\nSample Positive Tweets:")
+print(positive_tweets["text"].head(5))
+
+negative_tweets = df[df["airline_sentiment"] == "negative"]
+
+print("\nTotal Negative Tweets:", len(negative_tweets))
+print("\nSample Negative Tweets:")
+print(negative_tweets["text"].head(5))
+
+
+neg_reason = negative_tweets["negativereason"].value_counts()
+
+print("\nTop Reasons for Negative Sentiment:")
+print(neg_reason)
+
+
+plt.figure()
+neg_reason.plot(kind='bar')
+plt.title("Reasons for Negative Tweets")
+plt.xlabel("Reason")
+plt.ylabel("Count")
+plt.xticks(rotation=45)
+plt.show()

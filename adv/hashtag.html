@@ -1,0 +1,55 @@
+import pandas as pd
+import re
+import matplotlib.pyplot as plt
+from collections import Counter
+
+
+df = pd.read_csv("https://raw.githubusercontent.com/Stv21/sma_prac/refs/heads/main/Tweets.csv")
+
+
+def extract_hashtags(text):
+    if pd.isna(text):
+        return []
+    return re.findall(r"#(\w+)", text.lower())
+
+df["hashtags"] = df["text"].apply(extract_hashtags)
+
+
+all_hashtags = [tag for tags in df["hashtags"] for tag in tags]
+hashtag_counts = Counter(all_hashtags)
+
+top_hashtags = dict(hashtag_counts.most_common(10))
+
+print("\nTop Hashtags Overall:")
+print(top_hashtags)
+
+# Plot
+plt.figure()
+plt.bar(top_hashtags.keys(), top_hashtags.values())
+plt.title("Top Hashtags Overall")
+plt.xticks(rotation=45)
+plt.ylabel("Count")
+plt.show()
+
+group_hashtags = {}
+
+for sentiment in df["airline_sentiment"].unique():
+    subset = df[df["airline_sentiment"] == sentiment]
+    tags = [tag for tags in subset["hashtags"] for tag in tags]
+    group_hashtags[sentiment] = Counter(tags).most_common(5)
+
+print("\nTop Hashtags by Sentiment:")
+for k, v in group_hashtags.items():
+    print(k, ":", v)
+
+
+airline_hashtags = {}
+
+for airline in df["airline"].unique():
+    subset = df[df["airline"] == airline]
+    tags = [tag for tags in subset["hashtags"] for tag in tags]
+    airline_hashtags[airline] = Counter(tags).most_common(5)
+
+print("\nTop Hashtags by Airline:")
+for k, v in airline_hashtags.items():
+    print(k, ":", v)

@@ -1,0 +1,35 @@
+import pandas as pd
+import re
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.decomposition import LatentDirichletAllocation
+
+
+df = pd.read_csv("https://raw.githubusercontent.com/Stv21/sma_prac/refs/heads/main/Tweets.csv")
+
+
+texts = df['text'].astype(str)
+
+
+def clean_text(text):
+    text = text.lower()
+    text = re.sub(r"http\S+", "", text)
+    text = re.sub(r"@\w+", "", text)
+    text = re.sub(r"[^a-z\s]", "", text)
+    return text
+
+texts = texts.apply(clean_text)
+
+
+vectorizer = CountVectorizer(stop_words='english', max_features=20)
+X = vectorizer.fit_transform(texts)
+
+print("Top Keywords:")
+print(vectorizer.get_feature_names_out())
+
+lda = LatentDirichletAllocation(n_components=3, random_state=42)
+lda.fit(X)
+
+print("\nTopics:")
+for i, topic in enumerate(lda.components_):
+    print(f"Topic {i+1}:")
+    print([vectorizer.get_feature_names_out()[j] for j in topic.argsort()[-5:]])

@@ -1,0 +1,494 @@
+# ==================================================
+# 1. Content Analysis
+# ==================================================
+
+import pandas as pd
+import re
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.decomposition import LatentDirichletAllocation
+
+
+df = pd.read_csv("https://raw.githubusercontent.com/Stv21/sma_prac/refs/heads/main/Tweets.csv")
+
+
+texts = df['text'].astype(str)
+
+
+def clean_text(text):
+    text = text.lower()
+    text = re.sub(r"http\S+", "", text)
+    text = re.sub(r"@\w+", "", text)
+    text = re.sub(r"[^a-z\s]", "", text)
+    return text
+
+texts = texts.apply(clean_text)
+
+
+vectorizer = CountVectorizer(stop_words='english', max_features=20)
+X = vectorizer.fit_transform(texts)
+
+print("Top Keywords:")
+print(vectorizer.get_feature_names_out())
+
+lda = LatentDirichletAllocation(n_components=3, random_state=42)
+lda.fit(X)
+
+print("\nTopics:")
+for i, topic in enumerate(lda.components_):
+    print(f"Topic {i+1}:")
+    print([vectorizer.get_feature_names_out()[j] for j in topic.argsort()[-5:]])
+
+
+# ==================================================
+# 2. Location Analysis
+# ==================================================
+
+
+import pandas as pd
+import matplotlib.pyplot as plt
+
+df = pd.read_csv("https://raw.githubusercontent.com/Stv21/sma_prac/refs/heads/main/Tweets.csv")
+
+
+print(df.columns)
+
+location_col = "tweet_location"
+
+
+df_loc = df[df[location_col].notna()]
+
+
+df_loc[location_col] = df_loc[location_col].str.strip().str.lower()
+
+top_locations = df_loc[location_col].value_counts().head(10)
+
+print("\nTop 10 Locations:")
+print(top_locations)
+
+
+plt.figure()
+top_locations.plot(kind='bar')
+plt.title("Top Tweet Locations")
+plt.xlabel("Location")
+plt.ylabel("Number of Tweets")
+plt.xticks(rotation=45)
+plt.show()
+
+
+# ==================================================
+# 3. Trend Analysis
+# ==================================================
+
+import pandas as pd
+import matplotlib.pyplot as plt
+
+
+df = pd.read_csv("https://raw.githubusercontent.com/Stv21/sma_prac/refs/heads/main/Tweets.csv")
+
+
+df["tweet_created"] = pd.to_datetime(df["tweet_created"], errors='coerce')
+
+df["date"] = df["tweet_created"].dt.date
+daily_trend = df["date"].value_counts().sort_index()
+
+print("\nDaily Tweet Trend:")
+print(daily_trend)
+
+
+plt.figure()
+daily_trend.plot()
+plt.title("Tweet Trend Over Time (Daily)")
+plt.xlabel("Date")
+plt.ylabel("Number of Tweets")
+plt.xticks(rotation=45)
+plt.show()
+
+
+df["hour"] = df["tweet_created"].dt.hour
+hourly_trend = df["hour"].value_counts().sort_index()
+
+print("\nHourly Tweet Trend:")
+print(hourly_trend)
+
+
+plt.figure()
+hourly_trend.plot(kind='bar')
+plt.title("Tweet Activity by Hour")
+plt.xlabel("Hour of Day")
+plt.ylabel("Number of Tweets")
+plt.show()
+
+
+sentiment_trend = df.groupby(["date", "airline_sentiment"]).size().unstack()
+
+print("\nSentiment Trend:")
+print(sentiment_trend)
+
+
+plt.figure()
+sentiment_trend.plot()
+plt.title("Sentiment Trend Over Time")
+plt.xlabel("Date")
+plt.ylabel("Number of Tweets")
+plt.xticks(rotation=45)
+plt.show()
+
+
+# ==================================================
+# 4. Hashtag Popularity Analysis
+# ==================================================
+
+import pandas as pd
+import re
+import matplotlib.pyplot as plt
+from collections import Counter
+
+
+df = pd.read_csv("https://raw.githubusercontent.com/Stv21/sma_prac/refs/heads/main/Tweets.csv")
+
+
+def extract_hashtags(text):
+    if pd.isna(text):
+        return []
+    return re.findall(r"#(\w+)", text.lower())
+
+df["hashtags"] = df["text"].apply(extract_hashtags)
+
+
+all_hashtags = [tag for tags in df["hashtags"] for tag in tags]
+hashtag_counts = Counter(all_hashtags)
+
+top_hashtags = dict(hashtag_counts.most_common(10))
+
+print("\nTop Hashtags Overall:")
+print(top_hashtags)
+
+# Plot
+plt.figure()
+plt.bar(top_hashtags.keys(), top_hashtags.values())
+plt.title("Top Hashtags Overall")
+plt.xticks(rotation=45)
+plt.ylabel("Count")
+plt.show()
+
+group_hashtags = {}
+
+for sentiment in df["airline_sentiment"].unique():
+    subset = df[df["airline_sentiment"] == sentiment]
+    tags = [tag for tags in subset["hashtags"] for tag in tags]
+    group_hashtags[sentiment] = Counter(tags).most_common(5)
+
+print("\nTop Hashtags by Sentiment:")
+for k, v in group_hashtags.items():
+    print(k, ":", v)
+
+
+airline_hashtags = {}
+
+for airline in df["airline"].unique():
+    subset = df[df["airline"] == airline]
+    tags = [tag for tags in subset["hashtags"] for tag in tags]
+    airline_hashtags[airline] = Counter(tags).most_common(5)
+
+print("\nTop Hashtags by Airline:")
+for k, v in airline_hashtags.items():
+    print(k, ":", v)
+
+
+# ==================================================
+# 5. Sentiment Analysis
+# ==================================================
+
+import pandas as pd
+import matplotlib.pyplot as plt
+
+df = pd.read_csv("https://raw.githubusercontent.com/Stv21/sma_prac/refs/heads/main/Tweets.csv")
+
+sentiment_counts = df["airline_sentiment"].value_counts()
+
+print("\nOverall Sentiment Distribution:")
+print(sentiment_counts)
+
+
+plt.figure()
+sentiment_counts.plot(kind='bar')
+plt.title("Sentiment Distribution")
+plt.xlabel("Sentiment")
+plt.ylabel("Number of Tweets")
+plt.show()
+
+
+positive_tweets = df[df["airline_sentiment"] == "positive"]
+
+print("\nTotal Positive Tweets:", len(positive_tweets))
+print("\nSample Positive Tweets:")
+print(positive_tweets["text"].head(5))
+
+negative_tweets = df[df["airline_sentiment"] == "negative"]
+
+print("\nTotal Negative Tweets:", len(negative_tweets))
+print("\nSample Negative Tweets:")
+print(negative_tweets["text"].head(5))
+
+
+neg_reason = negative_tweets["negativereason"].value_counts()
+
+print("\nTop Reasons for Negative Sentiment:")
+print(neg_reason)
+
+
+plt.figure()
+neg_reason.plot(kind='bar')
+plt.title("Reasons for Negative Tweets")
+plt.xlabel("Reason")
+plt.ylabel("Count")
+plt.xticks(rotation=45)
+plt.show()
+
+
+# ==================================================
+# 6. User Engagement Analysis
+# ==================================================
+
+import pandas as pd
+import matplotlib.pyplot as plt
+
+
+df = pd.read_csv("https://raw.githubusercontent.com/Stv21/sma_prac/refs/heads/main/Tweets.csv")
+
+print("Basic Engagement Stats:")
+print(df["retweet_count"].describe())
+
+
+eng_sentiment = df.groupby("airline_sentiment")["retweet_count"].mean()
+
+print("\nAvg Engagement by Sentiment:")
+print(eng_sentiment)
+
+plt.figure()
+eng_sentiment.plot(kind='bar')
+plt.title("Engagement by Sentiment")
+plt.xlabel("Sentiment")
+plt.ylabel("Average Retweets")
+plt.show()
+
+
+eng_airline = df.groupby("airline")["retweet_count"].mean()
+
+print("\nAvg Engagement by Airline:")
+print(eng_airline)
+
+plt.figure()
+eng_airline.plot(kind='bar')
+plt.title("Engagement by Airline")
+plt.xlabel("Airline")
+plt.ylabel("Average Retweets")
+plt.xticks(rotation=45)
+plt.show()
+
+
+df["tweet_length"] = df["text"].astype(str).apply(len)
+
+plt.figure()
+plt.scatter(df["tweet_length"], df["retweet_count"])
+plt.title("Tweet Length vs Engagement")
+plt.xlabel("Tweet Length")
+plt.ylabel("Retweet Count")
+plt.show()
+
+
+top_tweets = df.sort_values(by="retweet_count", ascending=False).head(5)
+
+print("\nTop Engaging Tweets:")
+print(top_tweets[["text", "retweet_count"]])
+
+
+# ==================================================
+# 7. Exploratory Data Analysis
+# ==================================================
+
+import pandas as pd
+import matplotlib.pyplot as plt
+
+df = pd.read_csv("/content/drive/MyDrive/Datasets/Tweets.csv")
+
+
+print("Dataset Info:")
+print(df.info())
+
+print("\nFirst 5 Rows:")
+print(df.head())
+
+print("\nMissing Values:")
+print(df.isnull().sum())
+
+
+sentiment_counts = df["airline_sentiment"].value_counts()
+
+plt.figure()
+sentiment_counts.plot(kind='bar')
+plt.title("Sentiment Distribution")
+plt.xlabel("Sentiment")
+plt.ylabel("Count")
+plt.show()
+
+
+airline_counts = df["airline"].value_counts()
+
+plt.figure()
+airline_counts.plot(kind='bar')
+plt.title("Tweets per Airline")
+plt.xlabel("Airline")
+plt.ylabel("Count")
+plt.show()
+
+
+sentiment_airline = pd.crosstab(df["airline"], df["airline_sentiment"])
+
+plt.figure()
+sentiment_airline.plot(kind='bar', stacked=True)
+plt.title("Sentiment by Airline")
+plt.xlabel("Airline")
+plt.ylabel("Count")
+plt.xticks(rotation=45)
+plt.show()
+
+neg_reason = df["negativereason"].value_counts().head(10)
+
+plt.figure()
+neg_reason.plot(kind='bar')
+plt.title("Top Negative Reasons")
+plt.xlabel("Reason")
+plt.ylabel("Count")
+plt.xticks(rotation=45)
+plt.show()
+
+
+df["tweet_created"] = pd.to_datetime(df["tweet_created"], errors='coerce')
+df["date"] = df["tweet_created"].dt.date
+
+daily_trend = df["date"].value_counts().sort_index()
+
+plt.figure()
+daily_trend.plot()
+plt.title("Tweets Over Time")
+plt.xlabel("Date")
+plt.ylabel("Number of Tweets")
+plt.xticks(rotation=45)
+plt.show()
+
+
+df["tweet_length"] = df["text"].astype(str).apply(len)
+
+plt.figure()
+df["tweet_length"].plot(kind='hist')
+plt.title("Tweet Length Distribution")
+plt.xlabel("Length")
+plt.show()
+
+
+# ==================================================
+# 8. Brand Analysis
+# ==================================================
+
+import pandas as pd
+import matplotlib.pyplot as plt
+
+
+df = pd.read_csv("https://raw.githubusercontent.com/Stv21/sma_prac/refs/heads/main/Tweets.csv")
+
+
+brand_counts = df["airline"].value_counts()
+
+print("\nTweets per Airline:")
+print(brand_counts)
+
+plt.figure()
+brand_counts.plot(kind='bar')
+plt.title("Tweets per Airline (Brand Popularity)")
+plt.xlabel("Airline")
+plt.ylabel("Number of Tweets")
+plt.show()
+
+
+brand_sentiment = pd.crosstab(df["airline"], df["airline_sentiment"])
+
+print("\nSentiment by Airline:")
+print(brand_sentiment)
+
+plt.figure()
+brand_sentiment.plot(kind='bar', stacked=True)
+plt.title("Brand Sentiment Analysis")
+plt.xlabel("Airline")
+plt.ylabel("Number of Tweets")
+plt.xticks(rotation=45)
+plt.show()
+
+
+negative_data = df[df["airline_sentiment"] == "negative"]
+
+neg_reason_brand = pd.crosstab(negative_data["airline"], negative_data["negativereason"])
+
+print("\nNegative Reasons by Airline:")
+print(neg_reason_brand)
+
+plt.figure()
+neg_reason_brand.plot(kind='bar', stacked=True)
+plt.title("Negative Reasons by Brand")
+plt.xlabel("Airline")
+plt.ylabel("Count")
+plt.xticks(rotation=45)
+plt.show()
+
+positive_counts = df[df["airline_sentiment"] == "positive"]["airline"].value_counts()
+
+print("\nMost Positive Airlines:")
+print(positive_counts)
+
+
+negative_counts = df[df["airline_sentiment"] == "negative"]["airline"].value_counts()
+
+print("\nMost Negative Airlines:")
+print(negative_counts)
+
+
+# ==================================================
+# 9. Social Network Analysis
+# ==================================================
+
+import networkx as nx
+import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
+from sklearn.manifold import SpectralEmbedding
+
+
+G = nx.karate_club_graph()
+
+
+def girvan_newman(G):
+    G = G.copy()
+    while len(list(nx.connected_components(G))) == 1:
+        eb = nx.edge_betweenness_centrality(G)
+        G.remove_edge(*max(eb, key=eb.get))
+    return list(nx.connected_components(G))
+
+communities = girvan_newman(G)
+
+
+color_map = {}
+for i, c in enumerate(communities):
+    for node in c:
+        color_map[node] = i
+
+colors = [color_map[n] for n in G.nodes()]
+
+X = SpectralEmbedding(n_components=5).fit_transform(nx.to_numpy_array(G))
+kmeans_labels = KMeans(n_clusters=2, n_init=10).fit_predict(X)
+
+
+plt.figure(figsize=(8,6))
+nx.draw(G, node_color=colors, with_labels=True, cmap=plt.cm.Set1)
+plt.title("Girvan–Newman Community Detection (Colored)")
+plt.show()
+
+

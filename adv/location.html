@@ -1,0 +1,30 @@
+
+import pandas as pd
+import matplotlib.pyplot as plt
+
+df = pd.read_csv("https://raw.githubusercontent.com/Stv21/sma_prac/refs/heads/main/Tweets.csv")
+
+
+print(df.columns)
+
+location_col = "tweet_location"
+
+
+df_loc = df[df[location_col].notna()]
+
+
+df_loc[location_col] = df_loc[location_col].str.strip().str.lower()
+
+top_locations = df_loc[location_col].value_counts().head(10)
+
+print("\nTop 10 Locations:")
+print(top_locations)
+
+
+plt.figure()
+top_locations.plot(kind='bar')
+plt.title("Top Tweet Locations")
+plt.xlabel("Location")
+plt.ylabel("Number of Tweets")
+plt.xticks(rotation=45)
+plt.show()
