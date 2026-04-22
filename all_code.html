@@ -2,13 +2,16 @@
 # 1. Content Analysis
 # ==================================================
 
+from google.colab import drive
+drive.mount('/content/drive')
+
 import pandas as pd
 import re
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.decomposition import LatentDirichletAllocation
 
 
-df = pd.read_csv("/content/drive/MyDrive/Tweets.csv")
+df = pd.read_csv("/content/drive/MyDrive/Dataset/Tweets.csv")
 
 
 texts = df['text'].astype(str)
@@ -47,7 +50,7 @@ for i, topic in enumerate(lda.components_):
 import pandas as pd
 import matplotlib.pyplot as plt
 
-df = pd.read_csv("/content/drive/MyDrive/Tweets.csv")
+df = pd.read_csv("/content/drive/MyDrive/Dataset/Tweets.csv")
 
 
 print(df.columns)
@@ -83,7 +86,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 
-df = pd.read_csv("/content/drive/MyDrive/Tweets.csv")
+df = pd.read_csv("/content/drive/MyDrive/Dataset/Tweets.csv")
 
 
 df["tweet_created"] = pd.to_datetime(df["tweet_created"], errors='coerce')
@@ -144,7 +147,7 @@ import matplotlib.pyplot as plt
 from collections import Counter
 
 
-df = pd.read_csv("/content/drive/MyDrive/Tweets.csv")
+df = pd.read_csv("/content/drive/MyDrive/Dataset/Tweets.csv")
 
 
 def extract_hashtags(text):
@@ -202,7 +205,7 @@ for k, v in airline_hashtags.items():
 import pandas as pd
 import matplotlib.pyplot as plt
 
-df = pd.read_csv("/content/drive/MyDrive/Tweets.csv")
+df = pd.read_csv("/content/drive/MyDrive/Dataset/Tweets.csv")
 
 sentiment_counts = df["airline_sentiment"].value_counts()
 
@@ -254,7 +257,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 
-df = pd.read_csv("/content/drive/MyDrive/Tweets.csv")
+df = pd.read_csv("/content/drive/MyDrive/Dataset/Tweets.csv")
 
 print("Basic Engagement Stats:")
 print(df["retweet_count"].describe())
@@ -395,7 +398,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 
-df = pd.read_csv("/content/drive/MyDrive/Tweets.csv")
+df = pd.read_csv("/content/drive/MyDrive/Dataset/Tweets.csv")
 
 
 brand_counts = df["airline"].value_counts()

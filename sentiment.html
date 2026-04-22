@@ -1,7 +1,10 @@
+from google.colab import drive
+drive.mount('/content/drive')
+
 import pandas as pd
 import matplotlib.pyplot as plt
 
-df = pd.read_csv("/content/drive/MyDrive/Tweets.csv")
+df = pd.read_csv("/content/drive/MyDrive/Dataset/Tweets.csv")
 
 sentiment_counts = df["airline_sentiment"].value_counts()
 
